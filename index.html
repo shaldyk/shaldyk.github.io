@@ -18,7 +18,7 @@
         }
 
         body {
-            font-family: 'Inter', -apple-system, sans-serif;
+            font-family: 'Inter', sans-serif;
             background-color: var(--bg-gray);
             color: var(--text-main);
             margin: 0;
@@ -52,11 +52,11 @@
         }
 
         .container {
-            max-width: 1100px;
+            max-width: 1200px;
             width: 90%;
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-            gap: 30px;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
             margin-bottom: 80px;
         }
 
@@ -64,7 +64,7 @@
             background: var(--card-white);
             border: 1px solid var(--border-color);
             border-radius: 12px;
-            padding: 40px;
+            padding: 30px;
             text-align: left;
             text-decoration: none;
             color: inherit;
@@ -75,40 +75,41 @@
         }
 
         .project-card:hover {
-            transform: translateY(-10px);
+            transform: translateY(-8px);
             border-color: var(--primary-blue);
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 15px 20px -5px rgba(0, 0, 0, 0.1);
         }
 
         .icon-box {
-            font-size: 2.5rem;
+            font-size: 2rem;
             color: var(--primary-blue);
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
 
         .project-card h2 {
-            font-size: 1.5rem;
-            margin: 0 0 15px 0;
+            font-size: 1.3rem;
+            margin: 0 0 10px 0;
             color: var(--primary-dark);
         }
 
         .project-card p {
             color: var(--text-muted);
-            font-size: 1rem;
+            font-size: 0.95rem;
             line-height: 1.6;
             flex-grow: 1;
         }
 
         .btn {
-            margin-top: 25px;
+            margin-top: 20px;
             font-weight: 700;
             color: var(--primary-blue);
+            font-size: 0.9rem;
             display: flex;
             align-items: center;
         }
 
         .btn i {
-            margin-left: 10px;
+            margin-left: 8px;
             transition: 0.2s;
         }
 
@@ -128,31 +129,42 @@
 
     <header>
         <h1>Sergey Shaldybin</h1>
-        <p>Data Engineer & Database Administrator. Specialized in Performance Tuning, Cloud Architectures, and BI
-            Solutions.</p>
+        <p>Data Engineer & DBA specialized in performance tuning, modern data stacks, and AI integration.</p>
     </header>
 
     <div class="container">
         <a href="https://shaldyk.github.io/dwh-olap-refresh/" class="project-card">
             <div class="icon-box"><i class="fas fa-database"></i></div>
-            <h2>DWH & OLAP Knowledge Base</h2>
-            <p>A comprehensive technical roadmap covering architectural patterns, OLAP mechanics, and modern 2026
-                industry trends.</p>
-            <div class="btn">Explore Roadmap <i class="fas fa-arrow-right"></i></div>
+            <h2>DWH & OLAP Refresh</h2>
+            <p>A technical roadmap for the modern data ecosystem: Architecture, OLAP mechanics, and 2026 trends.</p>
+            <div class="btn">Launch Guide <i class="fas fa-arrow-right"></i></div>
+        </a>
+
+        <a href="https://shaldyk.github.io/cert-roadmap/" class="project-card">
+            <div class="icon-box"><i class="fas fa-certificate"></i></div>
+            <h2>Certification Roadmap</h2>
+            <p>Strategic tracking for ClickHouse, Databricks, and AWS Data Engineering certifications.</p>
+            <div class="btn">View Certs <i class="fas fa-arrow-right"></i></div>
+        </a>
+
+        <a href="https://shaldyk.github.io/ai-learning-roadmap/" class="project-card">
+            <div class="icon-box"><i class="fas fa-robot"></i></div>
+            <h2>AI Learning Roadmap</h2>
+            <p>Focusing on Generative AI, AI Agents, and the integration of LLMs into data engineering workflows.</p>
+            <div class="btn">View AI Path <i class="fas fa-arrow-right"></i></div>
         </a>
 
         <a href="https://shaldyk.github.io/DP-800-study-roadmap/" class="project-card">
-            <div class="icon-box"><i class="fas fa-graduation-cap"></i></div>
-            <h2>DP-800 Study Roadmap</h2>
-            <p>Curated learning path for Microsoft Data Analyst Associate certification, focusing on advanced data
-                modeling and analytics.</p>
+            <div class="icon-box"><i class="fas fa-chart-line"></i></div>
+            <h2>DP-800 Roadmap</h2>
+            <p>Advanced Data Modeling and Analytics guide for the Microsoft Azure ecosystem.</p>
             <div class="btn">View Study Guide <i class="fas fa-arrow-right"></i></div>
         </a>
 
         <a href="https://github.com/shaldyk" class="project-card">
             <div class="icon-box"><i class="fab fa-github"></i></div>
             <h2>Technical Lab</h2>
-            <p>Access raw repositories, migration scripts, and automation projects directly on GitHub.</p>
+            <p>Explore raw repositories, performance tuning scripts, and automation projects.</p>
             <div class="btn">GitHub Profile <i class="fas fa-arrow-right"></i></div>
         </a>
     </div>
