@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sergey Shaldybin | Data Portfolio</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-dark: #1a202c;
+            --primary-blue: #3182ce;
+            --bg-gray: #f7fafc;
+            --card-white: #ffffff;
+            --text-main: #2d3748;
+            --text-muted: #718096;
+            --border-color: #e2e8f0;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background-color: var(--bg-gray);
+            color: var(--text-main);
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        header {
+            width: 100%;
+            background: var(--primary-dark);
+            color: white;
+            padding: 80px 20px;
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        header h1 {
+            font-size: 2.8rem;
+            margin: 0;
+            font-weight: 800;
+        }
+
+        header p {
+            font-size: 1.2rem;
+            color: #cbd5e0;
+            margin-top: 15px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .container {
+            max-width: 1100px;
+            width: 90%;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 30px;
+            margin-bottom: 80px;
+        }
+
+        .project-card {
+            background: var(--card-white);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 40px;
+            text-align: left;
+            text-decoration: none;
+            color: inherit;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+
+        .project-card:hover {
+            transform: translateY(-10px);
+            border-color: var(--primary-blue);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        .icon-box {
+            font-size: 2.5rem;
+            color: var(--primary-blue);
+            margin-bottom: 20px;
+        }
+
+        .project-card h2 {
+            font-size: 1.5rem;
+            margin: 0 0 15px 0;
+            color: var(--primary-dark);
+        }
+
+        .project-card p {
+            color: var(--text-muted);
+            font-size: 1rem;
+            line-height: 1.6;
+            flex-grow: 1;
+        }
+
+        .btn {
+            margin-top: 25px;
+            font-weight: 700;
+            color: var(--primary-blue);
+            display: flex;
+            align-items: center;
+        }
+
+        .btn i {
+            margin-left: 10px;
+            transition: 0.2s;
+        }
+
+        .project-card:hover .btn i {
+            transform: translateX(5px);
+        }
+
+        footer {
+            margin-bottom: 40px;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <h1>Sergey Shaldybin</h1>
+        <p>Data Engineer & Database Administrator. Specialized in Performance Tuning, Cloud Architectures, and BI
+            Solutions.</p>
+    </header>
+
+    <div class="container">
+        <a href="https://shaldyk.github.io/dwh-olap-refresh/" class="project-card">
+            <div class="icon-box"><i class="fas fa-database"></i></div>
+            <h2>DWH & OLAP Knowledge Base</h2>
+            <p>A comprehensive technical roadmap covering architectural patterns, OLAP mechanics, and modern 2026
+                industry trends.</p>
+            <div class="btn">Explore Roadmap <i class="fas fa-arrow-right"></i></div>
+        </a>
+
+        <a href="https://shaldyk.github.io/DP-800-study-roadmap/" class="project-card">
+            <div class="icon-box"><i class="fas fa-graduation-cap"></i></div>
+            <h2>DP-800 Study Roadmap</h2>
+            <p>Curated learning path for Microsoft Data Analyst Associate certification, focusing on advanced data
+                modeling and analytics.</p>
+            <div class="btn">View Study Guide <i class="fas fa-arrow-right"></i></div>
+        </a>
+
+        <a href="https://github.com/shaldyk" class="project-card">
+            <div class="icon-box"><i class="fab fa-github"></i></div>
+            <h2>Technical Lab</h2>
+            <p>Access raw repositories, migration scripts, and automation projects directly on GitHub.</p>
+            <div class="btn">GitHub Profile <i class="fas fa-arrow-right"></i></div>
+        </a>
+    </div>
+
+    <footer>
+        &copy; 2026 Sergey Shaldybin | Krayot, Israel
+    </footer>
+
+</body>
+
+</html>
