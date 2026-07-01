@@ -8,7 +8,7 @@ Each section below maps to one Jira field. Copy the content of a block
 ## Summary (paste into "Summary")
 
 ```
-Store User-Agent data for tbl_bi_clicks (request_ua_id, click_ua_id)
+Keeping user agent data in tbl_bi_clicks (MS SQL Server)
 ```
 
 ---
