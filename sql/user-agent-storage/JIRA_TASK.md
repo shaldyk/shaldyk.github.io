@@ -102,24 +102,19 @@ Risks / notes:
 - No FK enforcement from tbl_bi_clicks to tbl_user_agents - deliberate, matches sub_id; flag to reviewers as an intentional deviation.
 - Version prerequisites: PAGE compression (2016 SP1+), OPTIMIZE_FOR_SEQUENTIAL_KEY (2019+).
 
+Implementation steps (deploy order 01, 02, 05, 06, 03, 04):
+- [DB] Create tbl_user_agents table (01_create_tbl_user_agents.sql)
+- [DB] Alter tbl_bi_clicks: add request_ua_id, click_ua_id (02_alter_tbl_bi_clicks.sql)
+- [DB] Alter tbl_bi_clicks_invalid_p: add request_ua_id, click_ua_id (05_alter_tbl_bi_clicks_invalid_p.sql)
+- [DB] Create bi_click_insert_invalid_v5 with UA get-or-create logic (06_bi_click_insert_invalid_v5.sql)
+- [DB] Create bi_click_insert_internal_v5 with UA get-or-create logic; calls invalid_v5 (03_bi_click_insert_internal_v5.sql)
+- [DB] Create bi_click_insert_v5 wrapper proc (04_bi_click_insert_v5.sql)
+- [App/API] Switch click-insert call site(s) to v5, wire up @request_ua/@click_ua
+- [QA] Concurrency + acceptance test pass in staging with production-like click volume
+- [Ops] Rollout + monitor tbl_user_agents growth and tbl_bi_clicks insert latency
+
 Reference implementation / SQL scripts:
 GitHub PR: https://github.com/shaldyk/shaldyk.github.io/pull/1
 Branch: claude/user-agent-sql-storage-rj3pyu
 Path: sql/user-agent-storage/  (files 01-06, deploy order 01,02,05,06,03,04)
-```
-
----
-
-## Subtasks (create one Jira subtask per line below)
-
-```
-[DB] Create tbl_user_agents table (01_create_tbl_user_agents.sql)
-[DB] Alter tbl_bi_clicks: add request_ua_id, click_ua_id (02_alter_tbl_bi_clicks.sql)
-[DB] Alter tbl_bi_clicks_invalid_p: add request_ua_id, click_ua_id (05_alter_tbl_bi_clicks_invalid_p.sql)
-[DB] Create bi_click_insert_invalid_v5 with UA get-or-create logic (06_bi_click_insert_invalid_v5.sql)
-[DB] Create bi_click_insert_internal_v5 with UA get-or-create logic; calls invalid_v5 (03_bi_click_insert_internal_v5.sql)
-[DB] Create bi_click_insert_v5 wrapper proc (04_bi_click_insert_v5.sql)
-[App/API] Switch click-insert call site(s) to v5, wire up @request_ua/@click_ua
-[QA] Concurrency + acceptance test pass in staging with production-like click volume
-[Ops] Rollout + monitor tbl_user_agents growth and tbl_bi_clicks insert latency
 ```
