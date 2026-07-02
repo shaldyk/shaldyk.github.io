@@ -13,29 +13,33 @@ GO
 --          strings referenced by tbl_bi_clicks
 --          (request_ua_id, click_ua_id).
 --
--- Design notes:
---   - user_agent carries the UNIQUE + CLUSTERED index so
---     the "does this UA already exist" lookup (step A of
---     the insert flow) is a clustered index seek.
---   - ua_id is the surrogate key returned to callers and
---     stored on tbl_bi_clicks; it is enforced as a
---     NONCLUSTERED primary key so IDENTITY lookups
---     (SCOPE_IDENTITY) stay cheap without owning the
---     clustered key.
---   - No FOREIGN KEY is created from tbl_bi_clicks to this
---     table, consistent with the existing sub_id column on
---     tbl_bi_clicks (dbo.tbl_websites_subid) - this is a
---     very high volume insert path and FK checks would add
---     avoidable overhead. Integrity is guaranteed by the
---     insert proc's get-or-create logic.
+-- Conventions mirror dbo.tbl_websites_subid:
+--   - IDENTITY surrogate key (ua_id) as a NONCLUSTERED PK.
+--   - The value column (user_agent) carries the UNIQUE
+--     CLUSTERED index, so the "does this UA already exist"
+--     lookup on the insert hot path is a clustered seek.
+--   - creation_date_time audit column, nullable.
+--   - No FOREIGN KEY from tbl_bi_clicks (matches how sub_id
+--     is not FK-constrained to tbl_websites_subid); a hot
+--     insert path avoids the per-row FK check and relies on
+--     the proc's get-or-create logic for integrity.
 -- ====================================================
-IF NOT EXISTS (SELECT 1 FROM sys.tables WHERE name = 'tbl_user_agents' AND schema_id = SCHEMA_ID('dbo'))
-BEGIN
-	CREATE TABLE dbo.tbl_user_agents (
-		ua_id			INT IDENTITY(1,1)	NOT NULL,
-		user_agent		VARCHAR(512)		NOT NULL,
-		CONSTRAINT PK_tbl_user_agents_ua_id PRIMARY KEY NONCLUSTERED (ua_id),
-		CONSTRAINT UQ_tbl_user_agents_user_agent UNIQUE CLUSTERED (user_agent)
-	);
-END
+CREATE TABLE [dbo].[tbl_user_agents](
+	[ua_id] [int] IDENTITY(1,1) NOT NULL,
+	[user_agent] [varchar](512) COLLATE Latin1_General_CI_AS NOT NULL,
+	[creation_date_time] [datetime] NULL,
+ CONSTRAINT [PK_tbl_user_agents] PRIMARY KEY NONCLUSTERED
+(
+	[ua_id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+
+SET ANSI_PADDING ON
+GO
+
+CREATE UNIQUE CLUSTERED INDEX [IX_tbl_user_agents_user_agent] ON [dbo].[tbl_user_agents]
+(
+	[user_agent] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 GO
