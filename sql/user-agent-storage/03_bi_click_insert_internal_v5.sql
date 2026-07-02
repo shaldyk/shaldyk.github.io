@@ -235,7 +235,9 @@ BEGIN
 	END;
 
 	-- Extract UA id for request_ua (server/request-side User-Agent)
-	IF @request_ua IS NOT NULL
+	-- NULLIF(...,'') treats an empty-string UA the same as no UA (id left NULL),
+	-- so we never create a junk empty-string row in tbl_user_agents.
+	IF NULLIF(@request_ua, '') IS NOT NULL
 	BEGIN
 		SELECT @v_request_ua_id = ua_id FROM dbo.tbl_user_agents WITH(NOLOCK) WHERE user_agent = @request_ua;
 		IF @v_request_ua_id IS NULL
@@ -261,7 +263,7 @@ BEGIN
 	-- any collation). We deliberately do NOT short-circuit on
 	-- @click_ua = @request_ua: that variable comparison would use the DB
 	-- default collation, which can disagree with the column's collation.
-	IF @click_ua IS NOT NULL
+	IF NULLIF(@click_ua, '') IS NOT NULL
 	BEGIN
 		SELECT @v_click_ua_id = ua_id FROM dbo.tbl_user_agents WITH(NOLOCK) WHERE user_agent = @click_ua;
 		IF @v_click_ua_id IS NULL
