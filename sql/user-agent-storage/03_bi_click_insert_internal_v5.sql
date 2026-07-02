@@ -256,25 +256,25 @@ BEGIN
 	END;
 
 	-- Extract UA id for click_ua (browser/click-side User-Agent)
+	-- The lookup predicate compares against the user_agent column, so it
+	-- resolves in the column's collation automatically (correct dedup under
+	-- any collation). We deliberately do NOT short-circuit on
+	-- @click_ua = @request_ua: that variable comparison would use the DB
+	-- default collation, which can disagree with the column's collation.
 	IF @click_ua IS NOT NULL
 	BEGIN
-		IF @click_ua = @request_ua
-			SET @v_click_ua_id = @v_request_ua_id; -- very common case, avoid a redundant lookup
-		ELSE
+		SELECT @v_click_ua_id = ua_id FROM dbo.tbl_user_agents WITH(NOLOCK) WHERE user_agent = @click_ua;
+		IF @v_click_ua_id IS NULL
 		BEGIN
-			SELECT @v_click_ua_id = ua_id FROM dbo.tbl_user_agents WITH(NOLOCK) WHERE user_agent = @click_ua;
-			IF @v_click_ua_id IS NULL
-			BEGIN
-				BEGIN TRY
-					INSERT INTO dbo.tbl_user_agents( user_agent )
-					VALUES( @click_ua );
+			BEGIN TRY
+				INSERT INTO dbo.tbl_user_agents( user_agent )
+				VALUES( @click_ua );
 
-					SET @v_click_ua_id = SCOPE_IDENTITY();
-				END TRY
-				BEGIN CATCH
-					SELECT @v_click_ua_id = ua_id FROM dbo.tbl_user_agents WITH(NOLOCK) WHERE user_agent = @click_ua;
-				END CATCH;
-			END;
+				SET @v_click_ua_id = SCOPE_IDENTITY();
+			END TRY
+			BEGIN CATCH
+				SELECT @v_click_ua_id = ua_id FROM dbo.tbl_user_agents WITH(NOLOCK) WHERE user_agent = @click_ua;
+			END CATCH;
 		END;
 	END;
 
