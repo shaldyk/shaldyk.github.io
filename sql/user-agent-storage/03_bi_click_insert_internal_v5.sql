@@ -244,8 +244,8 @@ BEGIN
 			-- sessions may try to insert the same new UA string; the loser of the
 			-- unique index violation just re-reads the value the winner inserted.
 			BEGIN TRY
-				INSERT INTO dbo.tbl_user_agents( user_agent )
-				VALUES( @request_ua );
+				INSERT INTO dbo.tbl_user_agents( user_agent, creation_date_time )
+				VALUES( @request_ua, GETDATE() );
 
 				SET @v_request_ua_id = SCOPE_IDENTITY();
 			END TRY
@@ -267,8 +267,8 @@ BEGIN
 		IF @v_click_ua_id IS NULL
 		BEGIN
 			BEGIN TRY
-				INSERT INTO dbo.tbl_user_agents( user_agent )
-				VALUES( @click_ua );
+				INSERT INTO dbo.tbl_user_agents( user_agent, creation_date_time )
+				VALUES( @click_ua, GETDATE() );
 
 				SET @v_click_ua_id = SCOPE_IDENTITY();
 			END TRY
