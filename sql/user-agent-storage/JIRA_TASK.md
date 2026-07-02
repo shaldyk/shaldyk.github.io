@@ -110,8 +110,8 @@ Implementation steps / progress (deploy order 01, 02, 05, 06, 03, 04):
 - [x] DONE  [DB] Create bi_click_insert_internal_v5 with UA get-or-create logic; calls invalid_v5 (03_bi_click_insert_internal_v5.sql)
 - [x] DONE  [DB] Create bi_click_insert_v5 wrapper proc (04_bi_click_insert_v5.sql)
 - [ ] TODO  [App/API] Switch click-insert call site(s) to v5, wire up @request_ua/@click_ua
-- [ ] TODO  [QA] Concurrency + acceptance test pass in staging with production-like click volume
-- [ ] TODO  [Ops] Rollout + monitor tbl_user_agents growth and tbl_bi_clicks insert latency
+- [ ] TODO  [QA] Insertion acceptance test: new UA creates+stores ua_id, repeat UA is deduped, NULL/empty UA leaves ua_id NULL, invalid-click path populates the ids
+- [ ] TODO  [Ops] Rollout + monitor tbl_user_agents growth and tbl_bi_clicks insert latency (volume/load behavior observed here, not gated by acceptance test)
 
 Reference implementation / SQL scripts:
 GitHub PR: https://github.com/shaldyk/shaldyk.github.io/pull/1
