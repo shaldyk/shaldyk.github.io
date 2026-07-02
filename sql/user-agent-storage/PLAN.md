@@ -45,7 +45,7 @@ concurrency race with a TRY/CATCH re-lookup.
 
 ```
 ua_id              INT IDENTITY(1,1)  -> CLUSTERED PRIMARY KEY
-user_agent         VARCHAR(512) COLLATE Latin1_General_BIN2
+user_agent         VARCHAR(512) COLLATE Latin1_General_CI_AS
                                       -> UNIQUE NONCLUSTERED index
 creation_date_time DATETIME NULL      -> "first seen" timestamp
 ```
@@ -70,10 +70,13 @@ specific reason:
   is a covering seek on the unique nonclustered index (it carries `ua_id`);
   `ua_id → user_agent` (analytics joins) is a clustered seek.
 
-**Collation `Latin1_General_BIN2`:** UA matching is pure equality, so a
-binary collation gives byte-exact (case-sensitive) dedup and cheaper
-comparisons. Note this is intentionally case-sensitive: `.../Chrome/120...`
-and a differently-cased variant are stored as distinct rows.
+**Collation `Latin1_General_CI_AS`:** matches the database default (and
+`tbl_websites_subid.sub_id_string`), keeping `user_agent` consistent with
+the rest of the schema and avoiding "cannot resolve collation conflict"
+errors when it is joined/compared against other columns in ad-hoc
+analytics. Dedup is therefore case-insensitive, which is rarely material
+for real UA strings (a case-only variant is unusual and typically junk
+traffic).
 
 **`DATA_COMPRESSION = PAGE`:** UA strings share large boilerplate prefixes,
 so page compression shrinks the table and keeps more of it cached.
@@ -116,11 +119,13 @@ Cloned from `v4`, adding:
   empty-string UA is treated as "no UA" (id left NULL) rather than creating
   a junk empty-string row.
 - **No `click_ua = request_ua` shortcut:** the `click_ua` block always does
-  the lookup. A variable-to-variable comparison would use the *database
-  default* collation, which can disagree with the column's `BIN2`
-  collation and assign a wrong `ua_id`. The lookup predicate
-  (`WHERE user_agent = @click_ua`) resolves in the *column's* collation and
-  is therefore correct by construction.
+  the lookup. A variable-to-variable comparison resolves in the *database
+  default* collation, which is not guaranteed to match the `user_agent`
+  column's collation (and would silently assign a wrong `ua_id` if they
+  ever diverged). The lookup predicate (`WHERE user_agent = @click_ua`)
+  resolves in the *column's* collation and is therefore correct by
+  construction under any collation. The saved lookup was one seek on a
+  small, cached table — not worth the fragility.
 - `INSERT INTO dbo.tbl_bi_clicks` extended with `request_ua_id,
   click_ua_id` / `@v_request_ua_id, @v_click_ua_id`.
 
@@ -170,15 +175,15 @@ path) is not touched — invalid/banned clicks won't get
 ## Testing / acceptance criteria
 
 - [ ] `tbl_user_agents` created: clustered PK on `ua_id`, unique
-      nonclustered `BIN2` index on `user_agent`, PAGE compression.
+      nonclustered `CI_AS` index on `user_agent`, PAGE compression.
 - [ ] `tbl_bi_clicks` has new nullable `request_ua_id`, `click_ua_id`.
 - [ ] New UA string → new row in `tbl_user_agents` (with
       `creation_date_time` set) and its `ua_id` stored on the click row.
 - [ ] Same UA string again → no duplicate row; existing `ua_id` reused.
 - [ ] `@request_ua`/`@click_ua` NULL **or empty string** → id left NULL, no
       junk `''` row created.
-- [ ] Case-sensitivity: two UAs differing only in case are stored as two
-      distinct rows (BIN2).
+- [ ] Case-insensitive dedup: two UAs differing only in case collapse to a
+      single row (CI_AS).
 - [ ] Concurrency: many parallel inserts of the same brand-new UA produce
       exactly one row, and no proc call fails.
 - [ ] Existing `v4` callers unaffected.

@@ -40,8 +40,9 @@ Why this design:
 Schema changes:
 1. New table dbo.tbl_user_agents (Design A):
    - ua_id INT IDENTITY(1,1) -> CLUSTERED primary key (append-only inserts)
-   - user_agent VARCHAR(512) COLLATE Latin1_General_BIN2 -> UNIQUE
-     NONCLUSTERED index (exact/case-sensitive dedup, covering lookup)
+   - user_agent VARCHAR(512) COLLATE Latin1_General_CI_AS -> UNIQUE
+     NONCLUSTERED index (covering lookup; collation matches the DB default
+     and sub_id_string, so dedup is case-insensitive)
    - creation_date_time DATETIME NULL -> "first seen" timestamp
    - DATA_COMPRESSION = PAGE
    - No FK from tbl_bi_clicks (matches sub_id, which also has no enforced
@@ -59,9 +60,9 @@ Schema changes:
      same shape as the existing sub_id block; new rows set
      creation_date_time = GETDATE()
    - Empty-string UA treated as no UA via NULLIF(@ua,'') IS NOT NULL
-   - No click_ua = request_ua shortcut (a variable comparison would use the
-     DB default collation and could disagree with the column's BIN2
-     collation; the column-based lookup is correct by construction)
+   - No click_ua = request_ua shortcut (a variable comparison resolves in
+     the DB default collation, not guaranteed to match the column's; the
+     column-based lookup is correct by construction under any collation)
    - Best-effort: a UA-capture failure never fails the click insert
 4. New wrapper proc dbo.bi_click_insert_v5 (cloned from bi_click_insert_v4):
    - Same two new params, passed through to bi_click_insert_internal_v5
@@ -89,12 +90,12 @@ Path: sql/user-agent-storage/  (files 01-04 applied in order)
 ## Acceptance Criteria (paste into "Acceptance Criteria" or a checklist field)
 
 ```
-- tbl_user_agents created: clustered PK on ua_id, unique nonclustered BIN2 index on user_agent, PAGE compression.
+- tbl_user_agents created: clustered PK on ua_id, unique nonclustered CI_AS index on user_agent, PAGE compression.
 - tbl_bi_clicks has new nullable request_ua_id, click_ua_id columns.
 - New UA string inserts a new row into tbl_user_agents (with creation_date_time set) and stores the resulting ua_id on the click row.
 - Same UA string again does not insert a duplicate row; the existing ua_id is reused.
 - @request_ua/@click_ua NULL or empty string leaves the id NULL and creates no junk empty-string row.
-- Two UAs differing only in case are stored as two distinct rows (BIN2 collation).
+- Two UAs differing only in case collapse to a single row (CI_AS collation).
 - Concurrency: many parallel inserts of the same brand-new UA result in exactly one row, and no proc call fails.
 - Existing v4 callers are unaffected (v4 wrapper and internal procs left untouched).
 - No measurable regression in insert latency/throughput on tbl_bi_clicks under load.

@@ -26,9 +26,13 @@ GO
 --     it fragments on random string inserts but is small
 --     and cheap to REORGANIZE/REBUILD without moving table
 --     data.
---     BIN2 collation: UA matching is pure equality, so a
---     binary collation gives exact (case/accent-sensitive)
---     dedup and cheaper byte-wise comparisons.
+--     Collation Latin1_General_CI_AS matches the database
+--     default (and tbl_websites_subid.sub_id_string), keeping
+--     the column consistent with the rest of the schema and
+--     avoiding "cannot resolve collation conflict" errors when
+--     user_agent is joined/compared in ad-hoc analytics.
+--     Dedup is therefore case-insensitive (rarely material for
+--     real UA strings).
 --   - ua_id -> user_agent bulk resolution (analytics joins
 --     from tbl_bi_clicks) is a clustered seek/scan of this
 --     small, buffer-pool-resident table; cost is dominated
@@ -43,7 +47,7 @@ GO
 -- ====================================================
 CREATE TABLE [dbo].[tbl_user_agents](
 	[ua_id] [int] IDENTITY(1,1) NOT NULL,
-	[user_agent] [varchar](512) COLLATE Latin1_General_BIN2 NOT NULL,
+	[user_agent] [varchar](512) COLLATE Latin1_General_CI_AS NOT NULL,
 	[creation_date_time] [datetime] NULL,
  CONSTRAINT [PK_tbl_user_agents] PRIMARY KEY CLUSTERED
 (
