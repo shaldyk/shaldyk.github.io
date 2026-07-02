@@ -89,7 +89,7 @@ BEGIN
 					AND c.click_guid = @click_guid
 				)
 		BEGIN
-			EXEC	[dbo].[bi_click_insert_invalid_v4]
+			EXEC	[dbo].[bi_click_insert_invalid_v5]
 					@source_post_id,
 					@source_website_id,
 					@dest_post_id,
@@ -116,7 +116,9 @@ BEGIN
 					@click_guid,
 					@ab_test_variant
 					, @rec_date_time,
-					@request_id
+					@request_id,
+					@request_ua,
+					@click_ua
 					;
 			SET @click_id = SCOPE_IDENTITY();
 			--SELECT 0 AS website_id,0 AS credits,0 AS paid_credits, @click_id as click_id;
@@ -130,7 +132,7 @@ BEGIN
 	IF EXISTS (SELECT 1 FROM V_fraud_banned_ips WHERE request_ip = @request_ip)
 	BEGIN
 
-		EXEC	[dbo].bi_click_insert_invalid_v4
+		EXEC	[dbo].bi_click_insert_invalid_v5
 				@source_post_id,
 				@source_website_id,
 				@dest_post_id,
@@ -157,7 +159,9 @@ BEGIN
 				@click_guid,
 				1024		--@ab_test_variant;
 				, @rec_date_time,
-				@request_id
+				@request_id,
+				@request_ua,
+				@click_ua
 				;
 		SET @click_id = SCOPE_IDENTITY();
 		--SELECT 0 AS website_id,0 AS credits,0 AS paid_credits, @click_id as click_id;

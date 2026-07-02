@@ -66,13 +66,16 @@ Schema changes:
    - Best-effort: a UA-capture failure never fails the click insert
 4. New wrapper proc dbo.bi_click_insert_v5 (cloned from bi_click_insert_v4):
    - Same two new params, passed through to bi_click_insert_internal_v5
+5. ALTER TABLE dbo.tbl_bi_clicks_invalid_p ADD request_ua_id INT NULL,
+   click_ua_id INT NULL (same as tbl_bi_clicks, for invalid/banned clicks).
+6. New invalid-clicks proc dbo.bi_click_insert_invalid_v5 (cloned from
+   bi_click_insert_invalid_v4): same @request_ua/@click_ua params and
+   get-or-create logic, inserts the ids into tbl_bi_clicks_invalid_p. The
+   internal v5 proc's two EXEC calls (duplicate-click and banned-IP paths)
+   are updated to call this v5 and pass the UA params through.
 
-v4 (wrapper + internal) is left untouched/running in parallel until callers
-migrate.
-
-Out of scope (call out if wanted): bi_click_insert_invalid_v4 (banned-IP
-and duplicate-click path) is not touched, so invalid clicks won't get
-request_ua_id/click_ua_id unless a follow-up task extends that proc.
+v4 (wrapper, internal, and invalid) is left untouched/running in parallel
+until callers migrate.
 
 Prerequisites:
 - DATA_COMPRESSION = PAGE requires SQL Server 2016 SP1+ (any edition).
@@ -121,10 +124,11 @@ Path: sql/user-agent-storage/  (files 01-04 applied in order)
 ```
 [DB] Create tbl_user_agents table (01_create_tbl_user_agents.sql)
 [DB] Alter tbl_bi_clicks: add request_ua_id, click_ua_id (02_alter_tbl_bi_clicks.sql)
-[DB] Create bi_click_insert_internal_v5 with UA get-or-create logic (03_bi_click_insert_internal_v5.sql)
+[DB] Alter tbl_bi_clicks_invalid_p: add request_ua_id, click_ua_id (05_alter_tbl_bi_clicks_invalid_p.sql)
+[DB] Create bi_click_insert_invalid_v5 with UA get-or-create logic (06_bi_click_insert_invalid_v5.sql)
+[DB] Create bi_click_insert_internal_v5 with UA get-or-create logic; calls invalid_v5 (03_bi_click_insert_internal_v5.sql)
 [DB] Create bi_click_insert_v5 wrapper proc (04_bi_click_insert_v5.sql)
 [App/API] Switch click-insert call site(s) to v5, wire up @request_ua/@click_ua
 [QA] Concurrency + acceptance test pass in staging with production-like click volume
 [Ops] Rollout + monitor tbl_user_agents growth and tbl_bi_clicks insert latency
-[Follow-up, optional] Extend bi_click_insert_invalid_v4 for UA tracking on invalid/banned clicks
 ```

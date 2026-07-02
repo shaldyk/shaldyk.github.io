@@ -38,6 +38,8 @@ concurrency race with a TRY/CATCH re-lookup.
 | 02 | `02_alter_tbl_bi_clicks.sql` | Add `request_ua_id`, `click_ua_id` columns |
 | 03 | `03_bi_click_insert_internal_v5.sql` | Internal insert proc with UA get-or-create |
 | 04 | `04_bi_click_insert_v5.sql` | Public wrapper proc that calls the internal v5 |
+| 05 | `05_alter_tbl_bi_clicks_invalid_p.sql` | Add `request_ua_id`, `click_ua_id` to the invalid-clicks table |
+| 06 | `06_bi_click_insert_invalid_v5.sql` | Invalid-clicks insert proc with UA get-or-create |
 
 ## Schema changes
 
@@ -145,12 +147,29 @@ lookup) is unchanged.
 
 File: `04_bi_click_insert_v5.sql`
 
-**Versioning:** shipped as `v5` (both procs) rather than mutating `v4` in
+**Versioning:** shipped as `v5` (all procs) rather than mutating `v4` in
 place, so any caller pinned to `v4` keeps working unchanged during rollout.
 
-**Out of scope:** `bi_click_insert_invalid_v4` (banned-IP / duplicate-click
-path) is not touched — invalid/banned clicks won't get
-`request_ua_id`/`click_ua_id` unless a follow-up task extends that proc.
+### 5. Alter `dbo.tbl_bi_clicks_invalid_p`
+
+Same two nullable columns as `tbl_bi_clicks`, so invalid/banned clicks can
+carry the same UA references.
+
+File: `05_alter_tbl_bi_clicks_invalid_p.sql`
+
+### 6. New invalid-clicks proc: `dbo.bi_click_insert_invalid_v5`
+
+Cloned from `bi_click_insert_invalid_v4` with the same `@request_ua`/
+`@click_ua` params, truncation, and get-or-create blocks (identical to the
+internal proc: `creation_date_time`, `NULLIF` empty-UA guard, no shortcut).
+Inserts `request_ua_id`/`click_ua_id` into `tbl_bi_clicks_invalid_p`.
+
+`03_bi_click_insert_internal_v5.sql` is updated so its **two** `EXEC` calls
+(duplicate-click path and banned-IP path) target `bi_click_insert_invalid_v5`
+and pass `@request_ua`/`@click_ua` through — otherwise the new columns would
+stay NULL for invalid clicks.
+
+File: `06_bi_click_insert_invalid_v5.sql`
 
 ## Prerequisites / environment
 
@@ -162,8 +181,11 @@ path) is not touched — invalid/banned clicks won't get
 ## Rollout steps
 
 1. Deploy `01` (new table — zero risk, no existing readers/writers).
-2. Deploy `02` (`ADD` two nullable INT columns — metadata-only, no rewrite).
-3. Deploy `03` then `04` (`CREATE OR ALTER`, safe to run repeatedly).
+2. Deploy `02` and `05` (`ADD` two nullable INT columns to `tbl_bi_clicks`
+   and `tbl_bi_clicks_invalid_p` — metadata-only, no rewrite).
+3. Deploy `06` (invalid proc), then `03` (internal proc — depends on `06`
+   existing since it `EXEC`s it), then `04` (wrapper). All `CREATE OR
+   ALTER`, safe to run repeatedly.
 4. Update the calling application/API layer to:
    - Call `bi_click_insert_v5` instead of `v4`.
    - Pass the server-side UA header as `@request_ua` and the
@@ -212,11 +234,12 @@ See `JIRA_TASK.md` for copy/paste-ready ticket content. Subtasks:
 
 1. **[DB] Create `tbl_user_agents` table** (`01`).
 2. **[DB] Alter `tbl_bi_clicks`: add `request_ua_id`, `click_ua_id`** (`02`).
-3. **[DB] Create `bi_click_insert_internal_v5`** (`03`).
-4. **[DB] Create `bi_click_insert_v5` wrapper** (`04`).
-5. **[App/API] Switch click-insert call site(s) to `v5`**, wire up
+3. **[DB] Alter `tbl_bi_clicks_invalid_p`: add the same two columns** (`05`).
+4. **[DB] Create `bi_click_insert_invalid_v5`** (`06`).
+5. **[DB] Create `bi_click_insert_internal_v5`** (`03`, calls `06`).
+6. **[DB] Create `bi_click_insert_v5` wrapper** (`04`).
+7. **[App/API] Switch click-insert call site(s) to `v5`**, wire up
    `@request_ua` / `@click_ua`.
-6. **[QA] Concurrency + acceptance test pass** per checklist above.
-7. **[Ops] Rollout + monitor** `tbl_user_agents` growth and
+8. **[QA] Concurrency + acceptance test pass** per checklist above.
+9. **[Ops] Rollout + monitor** `tbl_user_agents` growth and
    `tbl_bi_clicks` insert latency; keep `v4` as fallback until migrated.
-8. *(Follow-up, optional)* Extend `bi_click_insert_invalid_v4` similarly.
