@@ -82,39 +82,30 @@ Prerequisites:
 - OPTIMIZE_FOR_SEQUENTIAL_KEY = ON requires SQL Server 2019+ (remove on
   older versions).
 
-Reference implementation / SQL scripts:
-GitHub PR: https://github.com/shaldyk/shaldyk.github.io/pull/1
-Branch: claude/user-agent-sql-storage-rj3pyu
-Path: sql/user-agent-storage/  (files 01-04 applied in order)
-```
-
----
-
-## Acceptance Criteria (paste into "Acceptance Criteria" or a checklist field)
-
-```
+Acceptance criteria:
 - tbl_user_agents created: clustered PK on ua_id, unique nonclustered CI_AS index on user_agent, PAGE compression.
-- tbl_bi_clicks has new nullable request_ua_id, click_ua_id columns.
+- tbl_bi_clicks and tbl_bi_clicks_invalid_p have new nullable request_ua_id, click_ua_id columns.
 - New UA string inserts a new row into tbl_user_agents (with creation_date_time set) and stores the resulting ua_id on the click row.
 - Same UA string again does not insert a duplicate row; the existing ua_id is reused.
 - @request_ua/@click_ua NULL or empty string leaves the id NULL and creates no junk empty-string row.
 - Two UAs differing only in case collapse to a single row (CI_AS collation).
 - Concurrency: many parallel inserts of the same brand-new UA result in exactly one row, and no proc call fails.
-- Existing v4 callers are unaffected (v4 wrapper and internal procs left untouched).
+- Invalid/banned clicks (duplicate-click and banned-IP paths) also populate request_ua_id/click_ua_id in tbl_bi_clicks_invalid_p.
+- Existing v4 callers are unaffected (v4 procs left untouched).
 - No measurable regression in insert latency/throughput on tbl_bi_clicks under load.
-```
 
----
-
-## Risks / Notes (paste into a "Risks" or comment field)
-
-```
+Risks / notes:
 - Race on first insert of a new UA: handled via TRY/CATCH + re-select, identical to the existing sub_id pattern.
 - Index key size: VARCHAR(512) single-byte = 512 bytes, under SQL Server's 900-byte nonclustered-index key limit.
 - Hot-path performance: up to 2 extra lookups per click insert, each a seek on the small, cached tbl_user_agents; comparable to the existing sub_id lookup.
 - tbl_user_agents growth: UA strings have a continuously growing long tail (bots/spoofing), so plan for ongoing (not saturating) inserts. Still modest vs. tbl_bi_clicks; PAGE compression mitigates size. Monitor row count post-launch.
 - No FK enforcement from tbl_bi_clicks to tbl_user_agents - deliberate, matches sub_id; flag to reviewers as an intentional deviation.
 - Version prerequisites: PAGE compression (2016 SP1+), OPTIMIZE_FOR_SEQUENTIAL_KEY (2019+).
+
+Reference implementation / SQL scripts:
+GitHub PR: https://github.com/shaldyk/shaldyk.github.io/pull/1
+Branch: claude/user-agent-sql-storage-rj3pyu
+Path: sql/user-agent-storage/  (files 01-06, deploy order 01,02,05,06,03,04)
 ```
 
 ---
